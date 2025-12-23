@@ -1,0 +1,143 @@
+@page "/categories"
+@using Compta.Ledger.Core.orgTestapp.Services
+@using Compta.Ledger.Core.orgTestapp.Entities
+@using Compta.Ledger.Core.orgTestapp.App
+@rendermode InteractiveServer
+
+<PageTitle>Category Management - HierarchyId</PageTitle>
+
+<div class="container mt-4">
+    
+
+    <div class="row">
+        <div class="col-md-8">
+            <CategoryTree />
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">?? Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Categories:</span>
+                        <span class="stat-value">@TotalNodes</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Root Categories:</span>
+                        <span class="stat-value">@RootNodesCount</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Deepest Level:</span>
+                        <span class="stat-value">@MaxLevel</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">?? HierarchyId Features</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="tips-list">
+                        <li><strong>GetRoot()</strong> - Create root nodes</li>
+                        <li><strong>GetDescendant()</strong> - Add children</li>
+                        <li><strong>IsDescendantOf()</strong> - Find subtrees</li>
+                        <li><strong>GetAncestor()</strong> - Find parents</li>
+                        <li><strong>GetReparentedValue()</strong> - Move subtrees</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">?? Example Data</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success btn-sm w-100" @onclick="LoadExampleData">
+                        Load Example Categories
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .stat-value {
+        font-weight: bold;
+        color: #007bff;
+        font-size: 1.2em;
+    }
+
+    .tips-list {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .tips-list li {
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+</style>
+
+@code {
+    [Inject] public IOrgService OrgService { get; set; } = null!;
+
+    private int TotalNodes => OrgService.GetAllNodes().Count;
+    private int RootNodesCount => OrgService.GetAllNodes().Count(n => n.Route.GetLevel() == 1);
+    private int MaxLevel => OrgService.GetAllNodes().Any() ? OrgService.GetAllNodes().Max(n => n.Level) : 0;
+
+    private void LoadExampleData()
+    {
+        // Create root
+        var products = new Node { Name = "Products" };
+        OrgService.CreateOrg(products);
+
+        // Electronics
+        var electronics = new Node { Name = "Electronics" };
+        OrgService.AddChildToNode(products, electronics);
+
+        var phones = new Node { Name = "Phones" };
+        OrgService.AddChildToNode(electronics, phones);
+
+        var smartphones = new Node { Name = "Smartphones" };
+        OrgService.AddChildToNode(phones, smartphones);
+
+        var laptops = new Node { Name = "Laptops" };
+        OrgService.AddChildToNode(electronics, laptops);
+
+        // Furniture
+        var furniture = new Node { Name = "Furniture" };
+        OrgService.AddChildToNode(products, furniture);
+
+        var chairs = new Node { Name = "Chairs" };
+        OrgService.AddChildToNode(furniture, chairs);
+
+        var tables = new Node { Name = "Tables" };
+        OrgService.AddChildToNode(furniture, tables);
+
+        // Clothing
+        var clothing = new Node { Name = "Clothing" };
+        OrgService.AddChildToNode(products, clothing);
+
+        StateHasChanged();
+    }
+}

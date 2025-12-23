@@ -1,0 +1,72 @@
+/* TreeNode Enhanced Styles */
+
+@keyframes slideDownEffect {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+    .tree-node .node-name {
+        max-width: 120px !important;
+    }
+    
+    .tree-node .node-actions .btn {
+        padding: 4px 6px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .tree-node .children-container.scrollable {
+        max-height: 300px !important;
+    }
+}
+
+/* Additional hover effects */
+.tree-node .card:hover .node-actions {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* Enhanced expand button animation */
+.tree-node .expand-btn i {
+    transition: transform 0.2s ease;
+}
+
+.tree-node .expand-btn:hover i {
+    transform: rotate(15deg);
+}
+
+/* Loading effect for forms */
+.tree-node .slide-down {
+    animation: slideDownEffect 0.3s ease forwards;
+}
+
+/* Better scrollbar for all browsers */
+.tree-node .children-container.scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Improved badge styling */
+.tree-node .badge {
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.tree-node .badge-light {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.tree-node .badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
