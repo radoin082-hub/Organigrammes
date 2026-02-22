@@ -1,32 +1,33 @@
 using Compta.Ledger.Core.orgTestapp.Entities;
+using Ids.ResultPattern;
 
 namespace Compta.Ledger.Core.orgTestapp.App;
 
 public interface IOrgService
 {
-	Guid CreateOrg(Node node);
+    ValueTask<Result<Guid>> CreateOrg(Node node);
 
-	Guid AddChildToNode(Guid parentId, Node childNode);
+    ValueTask<Result<Guid>> createChildToNode(Guid parentId, Node childNode);
 
-	Guid AddChildToNode(Node parentNode, Node childNode);
+    ValueTask<Result<Guid>> createChildToNode(Node parentNode, Node childNode);
 
-	Node GetNodeById(Guid nodeId);
+    ValueTask<Result<Node>> GetNodeById(Guid nodeId);
 
-	List<Node> GetAllNodes();
+    ValueTask<Result<List<Node>>> GetAllNodes();
 
-	List<Node> GetNodesChildren(Guid nodeId);
+    ValueTask<Result<List<Node>>> GetNodesChildren(Guid nodeId);
 
-	List<Node> GetNodesChildren(Node node);
+    ValueTask<Result<List<Node>>> GetNodesChildren(Node node);
 
-	void DeleteNode(Guid nodeId);
+	ValueTask<Result> DeleteNode(Guid nodeId);
 
-	void DeleteNode(Node node);
+    ValueTask<Result> DeleteNode(Node node);
 
-	void MoveNode(Guid nodeId, Guid newParentId);
+    ValueTask<Result> MoveNode(Guid nodeId, Guid newParentId);
 
-	void MoveNode(Node node, Node newParentNode);
+    ValueTask<Result> MoveNode(Node node, Node newParentNode);
 
-	void RenameNode(Guid nodeId, string newName);
+    ValueTask<Result> RenameNode(Guid nodeId, string newName);
 
-	void RenameNode(Node node, string newName);
+    ValueTask<Result> RenameNode(Node node, string newName);
 }

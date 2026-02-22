@@ -1,0 +1,13 @@
+﻿.loading-spinner {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex; /* flex كامل */
+    align-items: center; /* وسط عمودي */
+    justify-content: center; /* وسط أفقي */
+    gap: 8px;
+    width: 100%; /* عرض كامل */
+    box-sizing: border-box; /* لا يخرج عن الـ container */
+    font-weight: 500;
+}

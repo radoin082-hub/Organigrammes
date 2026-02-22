@@ -1,287 +1,366 @@
 using Compta.Ledger.Core.orgTestapp.App;
 using Compta.Ledger.Core.orgTestapp.Entities;
+using Compta.Ledger.Core.orgTestapp.Helpers;
+using Compta.Ledger.Core.orgTestapp.Resources;
 using Compta.Ledger.Core.orgTestapp.Storage;
+using Ids.ResultPattern;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Compta.Ledger.Core.orgTestapp.Services;
 
-/// <summary>
-/// Organization service using HierarchyId for tree structure
-/// Uses IOrgStorage for data persistence
-/// All hierarchy operations are based on HierarchyId Route - no ParentId dependency
-/// </summary>
-public class OrgService : IOrgService
+public class OrgService
+    (IOrgStorage orgStorage,
+     ILogger<OrgService> logger,
+     IStringLocalizer<Resource> localizer,
+     IGuidProvider guid,
+     IDateProvider date) : IOrgService
 {
-	private readonly IOrgStorage _storage;
+    public async ValueTask<Result<Guid>> CreateOrg(Node node)
+    {
+        try
+        {
+            if (node is null)
+                return ErrorCode.NullValue;
 
-	public OrgService(IOrgStorage storage)
-	{
-		_storage = storage;
-	}
+            node.Id = guid.NewV7();
+            var root = HierarchyId.GetRoot();
+            var lastRoot = await orgStorage.GetLastRootNode();
 
-	/// <summary>
-	/// Creates a new root organization
-	/// </summary>
-	public Guid CreateOrg(Node node)
-	{
-		if (node == null)
-			throw new ArgumentNullException(nameof(node), "Node cannot be null");
+            if (lastRoot is null)
+            {
+                node.Route = root.GetDescendant(null, null);
+            }
+            else
+            {
+                node.Route = root.GetDescendant(lastRoot.Route, null);
+            }
+            node.SortOrder = await orgStorage.GetRootNodesCount();
+            node.CreatedAt = date.UtcNow;
 
-		node.Id = Guid.NewGuid();
+            await orgStorage.CreateNode(node);
+            await orgStorage.SaveChanges();
 
-		// Get the last root node to generate unique route for new root
-		var lastRoot = _storage.GetLastRootNode();
+            return node.Id;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating organization node with name {NodeName}", node?.Name);
+            return ErrorCode.Exception(ex);
+        }
 
-		// Generate unique root HierarchyId: /1/, /2/, /3/, etc.
-		node.Route = HierarchyId.GetRoot().GetDescendant(lastRoot?.Route, null);
-		node.SortOrder = _storage.GetRootNodesCount();
-		node.CreatedAt = DateTime.UtcNow;
+    }
 
-		_storage.CreateNode(node);
-		_storage.SaveChanges();
+    public async ValueTask<Result<Guid>> createChildToNode(Guid parentId, Node childNode)
+    {
+        try
+        {
+            var parentNode = await orgStorage.GetNodeById(parentId);
+            if (parentNode is null)
+                return ErrorCode.NullValue;
 
-		return node.Id;
-	}
+            return await createChildToNode(parentNode, childNode);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding child node to parent with ID {ParentId}", parentId);
+            return ErrorCode.Exception(ex);
 
-	/// <summary>
-	/// Adds a child node to a parent by parent ID
-	/// </summary>
-	public Guid AddChildToNode(Guid parentId, Node childNode)
-	{
-		var parentNode = _storage.GetNodeById(parentId);
-		if (parentNode == null)
-			throw new KeyNotFoundException($"Parent node with ID {parentId} not found");
+        }
 
-		return AddChildToNode(parentNode, childNode);
-	}
+    }
 
-	/// <summary>
-	/// Adds a child node to a parent using HierarchyId
-	/// </summary>
-	public Guid AddChildToNode(Node parentNode, Node childNode)
-	{
-		if (parentNode == null)
-			throw new ArgumentNullException(nameof(parentNode), "Parent node cannot be null");
-		if (childNode == null)
-			throw new ArgumentNullException(nameof(childNode), "Child node cannot be null");
+    public async ValueTask<Result<Guid>> createChildToNode(Node parentNode, Node childNode)
+    {
+        try
+        {
+            if (parentNode is null || childNode is null)
+                return ErrorCode.NullValue;
 
-		childNode.Id = Guid.NewGuid();
-		childNode.CreatedAt = DateTime.UtcNow;
+            childNode.Id = guid.NewV7();
+            childNode.CreatedAt = date.UtcNow;
 
-		// Get last child under this parent using HierarchyId
-		var lastChild = _storage.GetLastChild(parentNode.Route);
+            var lastChild = await orgStorage.GetLastChild(parentNode.Route);
 
-		// Calculate new HierarchyId using GetDescendant
-		childNode.Route = parentNode.Route.GetDescendant(
-			lastChild?.Route,  // After last child
-			null               // Before nothing (append)
-		);
+            childNode.Route = parentNode.Route.GetDescendant(lastChild?.Route);
 
-		childNode.SortOrder = _storage.GetNodesChildren(parentNode.Route).Count;
+            var nodeChildren = await orgStorage.GetNodesChildren(parentNode.Route);
+            childNode.SortOrder = nodeChildren.Count();
 
-		_storage.CreateNode(childNode);
-		_storage.SaveChanges();
+            await orgStorage.CreateNode(childNode);
+            await orgStorage.SaveChanges();
 
-		return childNode.Id;
-	}
+            return childNode.Id;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding child node with name {ChildNodeName} to parent node with ID {ParentId}", childNode?.Name, parentNode.Id);
+            return ErrorCode.Exception(ex);
+        }
 
-	/// <summary>
-	/// Gets a node by ID
-	/// </summary>
-	public Node GetNodeById(Guid nodeId)
-	{
-		var node = _storage.GetNodeById(nodeId);
-		if (node == null)
-			throw new KeyNotFoundException($"Node with ID {nodeId} not found");
+    }
 
-		return node;
-	}
+    public async ValueTask<Result<Node>> GetNodeById(Guid nodeId)
+    {
+        try
+        {
+            var node = await orgStorage.GetNodeById(nodeId);
+            if (node is null)
+                return ErrorCode.NotFound(localizer["Node.NotFound.Title"], localizer["Node.NotFound.Description"]);
 
-	/// <summary>
-	/// Gets all nodes ordered by HierarchyId (hierarchical order)
-	/// </summary>
-	public List<Node> GetAllNodes()
-	{
-		var nodes = _storage.GetAllNodes();
-		BuildHierarchy(nodes);
-		return nodes;
-	}
+            return node;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.GetByIdException"], nodeId);
+            return ErrorCode.Exception(ex);
+        }
 
-	/// <summary>
-	/// Gets children of a node by parent ID
-	/// </summary>
-	public List<Node> GetNodesChildren(Guid nodeId)
-	{
-		var node = _storage.GetNodeById(nodeId);
-		if (node == null)
-			throw new KeyNotFoundException($"Node with ID {nodeId} not found");
+    }
 
-		return GetNodesChildren(node);
-	}
+    public async ValueTask<Result<List<Node>>> GetAllNodes()
+    {
+        try
+        {
+            var nodes = await orgStorage.GetAllNodes();
+            await buildHierarchy(nodes);
+            return nodes;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.GetAllException"]);
+            return ErrorCode.Exception(ex);
 
-	/// <summary>
-	/// Gets direct children of a node using HierarchyId
-	/// </summary>
-	public List<Node> GetNodesChildren(Node node)
-	{
-		if (node == null)
-			throw new ArgumentNullException(nameof(node), "Node cannot be null");
+        }
 
-		return _storage.GetNodesChildren(node.Route);
-	}
+    }
 
-	/// <summary>
-	/// Deletes a node by ID
-	/// </summary>
-	public void DeleteNode(Guid nodeId)
-	{
-		var node = _storage.GetNodeById(nodeId);
-		if (node == null)
-			throw new KeyNotFoundException($"Node with ID {nodeId} not found");
+    public async ValueTask<Result<List<Node>>> GetNodesChildren(Guid nodeId)
+    {
+        try
+        {
+            var node = await orgStorage.GetNodeById(nodeId);
+            if (node is null)
+                return ErrorCode.NotFound(localizer["Node.NotFound.Title"], localizer["Node.NotFound.Description"]);
 
-		DeleteNode(node);
-	}
+            return await GetNodesChildren(node!);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.GetChildrenException"], nodeId);
+            return ErrorCode.Exception(ex);
 
-	/// <summary>
-	/// Deletes a node and all its descendants using HierarchyId
-	/// </summary>
-	public void DeleteNode(Node node)
-	{
-		if (node == null)
-			throw new ArgumentNullException(nameof(node), "Node cannot be null");
+        }
 
-		// Delete all descendants using HierarchyId (includes the node itself)
-		_storage.DeleteNodesByRoute(node.Route);
-		_storage.SaveChanges();
-	}
+    }
+    public async ValueTask<Result<List<Node>>> GetNodesChildren(Node node)
+    {
+        try
+        {
+            if (node is null)
+                return ErrorCode.NullValue;
 
-	/// <summary>
-	/// Moves a node to a new parent by IDs
-	/// </summary>
-	public void MoveNode(Guid nodeId, Guid newParentId)
-	{
-		var node = _storage.GetNodeById(nodeId);
-		if (node == null)
-			throw new KeyNotFoundException($"Node with ID {nodeId} not found");
+            var result = await orgStorage.GetNodesChildren(node.Route);
+            return result is not null
+                 ? result
+                 : ErrorCode.NotFound(localizer["Node.NotFound.Title"], localizer["Node.NotFound.Description"]);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.GetChildrenException"], node.Id);
+            return ErrorCode.Exception(ex);
+        }
 
-		var newParentNode = _storage.GetNodeById(newParentId);
-		if (newParentNode == null)
-			throw new KeyNotFoundException($"Parent node with ID {newParentId} not found");
+    }
 
-		MoveNode(node, newParentNode);
-	}
+    public async ValueTask<Result> DeleteNode(Guid nodeId)
+    {
+        try
+        {
+            var node = await orgStorage.GetNodeById(nodeId);
+            if (node is null)
+                return ErrorCode.NotFound(localizer["Node.NotFound.Title"], localizer["Node.NotFound.Description"]);
 
-	/// <summary>
-	/// Moves a node to a new parent using HierarchyId
-	/// </summary>
-	public void MoveNode(Node node, Node newParentNode)
-	{
-		if (node == null)
-			throw new ArgumentNullException(nameof(node), "Node cannot be null");
-		if (newParentNode == null)
-			throw new ArgumentNullException(nameof(newParentNode), "Parent node cannot be null");
+            await DeleteNode(node);
+            return Result.Success();
 
-		// Prevent circular reference using IsDescendantOf
-		if (newParentNode.Route.IsDescendantOf(node.Route))
-			throw new InvalidOperationException("Cannot move a node to one of its descendants");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.DeleteException"], nodeId);
+            return ErrorCode.Exception(ex);
+        }
 
-		// Get last child under new parent
-		var lastChild = _storage.GetLastChild(newParentNode.Route);
+    }
+    public async ValueTask<Result> DeleteNode(Node node)
+    {
+        try
+        {
+            if (node is null)
+                return ErrorCode.NullValue;
 
-		var oldRoute = node.Route;
-		var newRoute = newParentNode.Route.GetDescendant(
-			lastChild?.Route,
-			null
-		);
+            await orgStorage.DeleteNodesByRoute(node.Route);
+            await orgStorage.SaveChanges();
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.DeleteException"], node.Id);
+            return ErrorCode.Exception(ex);
 
-		// Get all descendants to update their routes
-		var descendants = _storage.GetDescendants(oldRoute);
+        }
 
-		// Update node's route
-		node.Route = newRoute;
-		node.UpdatedAt = DateTime.UtcNow;
-		_storage.UpdateNode(node);
+    }
 
-		// Update all descendants' routes using GetReparentedValue
-		foreach (var descendant in descendants)
-		{
-			descendant.Route = descendant.Route.GetReparentedValue(oldRoute, newRoute)!;
-			descendant.UpdatedAt = DateTime.UtcNow;
-			_storage.UpdateNode(descendant);
-		}
+    public async ValueTask<Result> MoveNode(Guid nodeId, Guid newParentId)
+    {
+        try
+        {
+            var node = await orgStorage.GetNodeById(nodeId);
+            if (node is null)
+                return ErrorCode.NotFound(localizer["Node.NotFound.Title"], localizer["Node.NotFound.Description"]);
 
-		_storage.SaveChanges();
-	}
+            var newParentNode = await orgStorage.GetNodeById(newParentId);
+            if (newParentNode is null)
+                return ErrorCode.NotFound(localizer["Node.NotFound.Title"], localizer["Node.NotFound.Description"]);
 
-	/// <summary>
-	/// Renames a node by ID
-	/// </summary>
-	public void RenameNode(Guid nodeId, string newName)
-	{
-		var node = _storage.GetNodeById(nodeId);
-		if (node == null)
-			throw new KeyNotFoundException($"Node with ID {nodeId} not found");
+            await MoveNode(node, newParentNode!);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.MoveException"], nodeId, newParentId);
+            return ErrorCode.Exception(ex);
+        }
 
-		RenameNode(node, newName);
-	}
+    }
 
-	/// <summary>
-	/// Renames a node
-	/// </summary>
-	public void RenameNode(Node node, string newName)
-	{
-		if (node == null)
-			throw new ArgumentNullException(nameof(node), "Node cannot be null");
-		if (string.IsNullOrWhiteSpace(newName))
-			throw new ArgumentException("Node name cannot be empty", nameof(newName));
+    public async ValueTask<Result> MoveNode(Node node, Node newParentNode)
+    {
+        try
+        {
+            if (node is null || newParentNode is null)
+                return ErrorCode.NullValue;
 
-		node.Name = newName.Trim();
-		node.UpdatedAt = DateTime.UtcNow;
-		_storage.UpdateNode(node);
-		_storage.SaveChanges();
-	}
+            if (newParentNode.Route.IsDescendantOf(node.Route))
+                return ErrorCode.Failure(localizer["Node.MoveToDescendant.Title"], localizer["Node.MoveToDescendant.Description"]);
 
-	private void BuildHierarchy(List<Node> nodes)
-	{
-		foreach (var node in nodes)
-		{
-			node.Children.Clear();
-			node.Parent = null;
-		}
+            var lastChild = await orgStorage.GetLastChild(newParentNode.Route);
 
-		foreach (var node in nodes)
-		{
-			var level = node.Route.GetLevel();
-			if (level > 1)
-			{
-				var parentRoute = node.Route.GetAncestor(1);
-				var parent = nodes.FirstOrDefault(n => n.Route == parentRoute);
+            var oldRoute = node.Route;
+            var newRoute = newParentNode.Route.GetDescendant(lastChild?.Route, null);
+            var descendants = await orgStorage.GetDescendants(oldRoute);
 
-				if (parent != null)
-				{
-					node.Parent = parent;
-					if (!parent.Children.Contains(node))
-					{
-						parent.Children.Add(node);
-					}
-				}
-			}
-		}
+            node.Route = newRoute;
+            node.UpdatedAt = date.UtcNow;
 
-		foreach (var node in nodes)
-		{
-			if (node.Children.Any())
-			{
-				var sortedChildren = node.Children
-					.OrderBy(c => c.Route)
-					.ToList();
+            if (!(await orgStorage.UpdateNode(node)))
+                return ErrorCode.Failure(localizer["Node.Update.Title"], localizer["Node.Update.Description"]);
 
-				node.Children.Clear();
-				foreach (var child in sortedChildren)
-				{
-					node.Children.Add(child);
-				}
-			}
-		}
-	}
+            foreach (var descendant in descendants)
+            {
+                descendant.Route = descendant.Route.GetReparentedValue(oldRoute, newRoute)!;
+                descendant.UpdatedAt = date.UtcNow;
+
+                if (!(await orgStorage.UpdateNode(descendant)))
+                    return ErrorCode.Failure(localizer["Node.Update.Title"], localizer["Node.Update.Description"]);
+            }
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.MoveException"], node.Id, newParentNode.Id);
+            return ErrorCode.Exception(ex);
+        }
+
+    }
+
+    public async ValueTask<Result> RenameNode(Guid nodeId, string newName)
+    {
+        try
+        {
+            var node = await orgStorage.GetNodeById(nodeId);
+            if (node is null)
+                return ErrorCode.NotFound("Node.NotFound.Title", localizer["Node.NotFound.Description"]);
+
+            var result = await RenameNode(node, newName);
+
+            return result.IsSuccess
+                ? Result.Success()
+                : ErrorCode.Failure(localizer["Node.Rename.Title"], localizer["Node.Rename.Description"]);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.RenameException"], nodeId);
+            return ErrorCode.Exception(ex);
+        }
+
+    }
+
+    public async ValueTask<Result> RenameNode(Node node, string newName)
+    {
+        try
+        {
+            if (node is null || string.IsNullOrWhiteSpace(newName))
+                return ErrorCode.NullValue;
+
+            node.Name = newName.Trim();
+            node.UpdatedAt = date.UtcNow;
+            await orgStorage.UpdateNode(node);
+            await orgStorage.SaveChanges();
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, localizer["Node.RenameException"], node.Id);
+            return ErrorCode.Exception(ex);
+        }
+
+    }
+
+    private async Task buildHierarchy(List<Node> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            node.Children.Clear();
+            node.Parent = null;
+        }
+
+        foreach (var node in nodes)
+        {
+            var level = node.Route.GetLevel();
+            if (level > 1)
+            {
+                var parentRoute = node.Route.GetAncestor(1);
+                var parent = nodes.FirstOrDefault(n => n.Route == parentRoute);
+
+                if (parent is not null)
+                {
+                    node.Parent = parent;
+                    if (!parent.Children.Contains(node))
+                    {
+                        parent.Children.Add(node);
+                    }
+                }
+            }
+        }
+
+        foreach (var node in nodes)
+        {
+            if (node.Children.Any())
+            {
+                var sortedChildren = node.Children
+                    .OrderBy(c => c.Route)
+                    .ToList();
+
+                node.Children.Clear();
+                foreach (var child in sortedChildren)
+                {
+                    node.Children.Add(child);
+                }
+            }
+        }
+        await Task.CompletedTask;
+    }
 }

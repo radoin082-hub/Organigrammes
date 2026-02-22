@@ -4,62 +4,83 @@
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 
-<div class="tree-node" style="margin-left: @((Node.Level - 1) * 16)px;">
-    <div class="node-item @(IsDragOver ? "drag-over" : "")"
-        @onmouseenter="() => ShowButtons = true"
-        @onmouseleave="() => ShowButtons = false"
-        draggable="true"
-        @ondragstart="HandleDragStart"
-        @ondragend="HandleDragEnd"
-        @ondragover="HandleDragOver"
-        @ondragover:preventDefault
-        @ondragleave="HandleDragLeave"
-        @ondrop="HandleDrop"
-        @ondrop:preventDefault>
-        
-        @if (IsEditingName)
+<div class="tree-node" style="margin-left: @(25)px;">
+    <div class="node-item @(isDragOver ? "drag-over" : "")"
+         @onmouseenter="() => showButtons = true"
+         @onmouseleave="() => showButtons = false"
+         draggable="true"
+         @ondragstart="dragStart"
+         @ondragend="dragEnd"
+         @ondragover="dragOver"
+         @ondragover:preventDefault
+         @ondragleave="dragLeave"
+         @ondrop="dropNode"
+         @ondrop:preventDefault>
+
+        @if (isEditingName)
         {
             <div class="edit-row">
                 <input type="text" class="edit-input"
-                    value="@EditingNameValue"
-                    @onchange="@((ChangeEventArgs e) => EditingNameValue = e.Value?.ToString() ?? string.Empty)"
-                    placeholder="Enter new name"
-                    @onkeydown="HandleEditKeypress"
-                    autofocus />
-                <button class="action-btn save-btn" @onclick="SaveEditedName" title="Save">✓</button>
-                <button class="action-btn cancel-btn" @onclick="CancelEditingName" title="Cancel">✕</button>
+                       value="@editingNameValue"
+                       @onchange="@((ChangeEventArgs e) => editingNameValue = e.Value?.ToString() ?? string.Empty)"
+                       placeholder="Enter new name"
+                       @onkeydown="keyPress"
+                       autofocus />
+                <button class="action-btn save-btn" @onclick="saveEdited" title="Save">✓</button>
+                <button class="action-btn cancel-btn" @onclick="cancelEditing" title="Cancel">✕</button>
             </div>
         }
         else
         {
             <div class="node-row">
-                @if (Node.Children != null && Node.Children.Any())
+                @if (Node.Children is not null && Node.Children.Any())
                 {
-                    <button class="toggle-btn" @onclick="ToggleExpanded">
-                        @(IsExpanded ? "▼" : "▶")
+                    <button class="toggle-btn" @onclick="toggleExpanded">
+                        @if (isExpanded)
+                        {
+                            <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i>
+
+                        }
+                        else
+                        {
+                            <i class="fa fa-angle-right fa-lgs" aria-hidden="true"></i>
+
+                        }
                     </button>
+            
+
                 }
                 else
                 {
                     <span class="toggle-placeholder"></span>
                 }
                 <span class="folder-icon">📁</span>
-                <span class="node-name">@Node.Name
-                    @if (Node.Children != null && Node.Children.Any())
+                <span class="node-name">
+                    @Node.Name
+                    @if (Node.Children is not null && Node.Children.Any())
                     {
                         <span class="child-count">[ @Node.Children.Count ]</span>
                     }
                 </span>
-                <div class="node-actions @(ShowButtons ? "visible" : "")">
-                    <button class="action-btn" @onclick="StartEditingName" title="Rename">✏️</button>
-                    <button class="action-btn" @onclick="OpenAddChildModal" title="Add Child">➕</button>
-                    <button class="action-btn" @onclick="DeleteNode" title="Delete">🗑️</button>
+                <div class="node-actions @(showButtons ? "visible" : "")">
+                    <button class="action-btn edit" @onclick="startEditing" title="Rename">
+                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                    </button>
+
+                    <button class="action-btn add" @onclick="openChildModal" title="Add Child">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                    </button>
+
+                    <button class="action-btn delete" @onclick="deleteNode" title="Delete">
+                        <i class="fa fa-trash-o" aria-hidden="true"></i>
+                    </button>
                 </div>
+
             </div>
         }
     </div>
 
-    @if (Node.Children != null && Node.Children.Any() && IsExpanded)
+    @if (Node.Children is not null && Node.Children.Any() && isExpanded)
     {
         @foreach (var child in Node.Children)
         {
@@ -69,393 +90,26 @@
 </div>
 
 
-@if (ShowAddChildModal)
+@if (showCreateChildModal)
 {
-    <div class="modal-backdrop" @onclick="CloseAddChildModal"></div>
+    <div class="modal-backdrop" @onclick="closeChildModal"></div>
     <div class="modal-dialog-container">
         <div class="modal-box">
             <div class="modal-header">
                 <h5>Add Child to '@Node.Name'</h5>
-                <button class="close-btn" @onclick="CloseAddChildModal">✕</button>
+                <button class="close-btn" @onclick="closeChildModal">✕</button>
             </div>
             <div class="modal-body">
                 <label>Child Category Name</label>
-                <input type="text" class="modal-input" @bind="NewChildName" 
-                    placeholder="Enter child name" @onkeydown="HandleChildKeyDown" autofocus />
+                <input type="text" class="modal-input" @bind="newChildName"
+                       placeholder="Enter child name" @onkeydown="keyDown" autofocus />
             </div>
             <div class="modal-footer">
-                <button class="btn-modal btn-cancel" @onclick="CloseAddChildModal">Cancel</button>
-                <button class="btn-modal btn-save" @onclick="AddChild">Add Child</button>
+                <button class="btn-modal btn-cancel" @onclick="closeChildModal">Cancel</button>
+                <button class="btn-modal btn-save" @onclick="createChild">Add Child</button>
             </div>
         </div>
     </div>
 }
 
-<style>
-    .tree-node {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 13px;
-    }
-    
-    .node-item {
-        display: flex;
-        align-items: center;
-        padding: 2px 4px;
-        border-radius: 3px;
-        cursor: pointer;
-    }
-    
-    .node-item:hover {
-        background: #e8f4fc;
-    }
-    
-    .node-item.drag-over {
-        background: #cce5ff;
-        outline: 2px solid #0078d4;
-    }
-    
-    .node-row, .edit-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        width: 100%;
-    }
-    
-    .toggle-btn {
-        width: 16px;
-        height: 16px;
-        border: none;
-        background: none;
-        cursor: pointer;
-        font-size: 10px;
-        color: #666;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .toggle-btn:hover {
-        color: #0078d4;
-    }
-    
-    .toggle-placeholder {
-        width: 16px;
-        height: 16px;
-        display: inline-block;
-    }
-    
-    .folder-icon {
-        font-size: 14px;
-    }
-    
-    .node-name {
-        flex: 1;
-        color: #333;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .child-count {
-        font-size: 11px;
-        color: #888;
-        margin-left: 4px;
-    }
-    
-    .node-actions {
-        display: flex;
-        gap: 2px;
-        opacity: 0;
-        transition: opacity 0.15s;
-    }
-    
-    .node-actions.visible {
-        opacity: 1;
-    }
-    
-    .action-btn {
-        border: none;
-        background: none;
-        cursor: pointer;
-        padding: 2px 4px;
-        font-size: 12px;
-        border-radius: 3px;
-    }
-    
-    .action-btn:hover {
-        background: #ddd;
-    }
-    
-    .save-btn {
-        background: #28a745;
-        color: white;
-    }
-    
-    .save-btn:hover {
-        background: #218838;
-    }
-    
-    .cancel-btn {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .cancel-btn:hover {
-        background: #5a6268;
-    }
-    
-    .edit-input {
-        flex: 1;
-        padding: 2px 6px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        font-size: 12px;
-        height: 22px;
-    }
-    
-    .edit-input:focus {
-        outline: none;
-        border-color: #0078d4;
-    }
-    
-    /* Modal Styles */
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-    }
-    
-    .modal-dialog-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1001;
-        pointer-events: none;
-    }
-    
-    .modal-box {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        width: 400px;
-        max-width: 90%;
-        pointer-events: auto;
-        animation: modalSlideIn 0.2s ease;
-    }
-    
-    @@keyframes modalSlideIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .modal-header h5 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-    }
-    
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-        color: #666;
-        padding: 0;
-    }
-    
-    .close-btn:hover {
-        color: #333;
-    }
-    
-    .modal-body {
-        padding: 20px;
-    }
-    
-    .modal-body label {
-        display: block;
-        font-size: 13px;
-        font-weight: 500;
-        color: #555;
-        margin-bottom: 6px;
-    }
-    
-    .modal-input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-    
-    .modal-input:focus {
-        outline: none;
-        border-color: #0078d4;
-        box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
-    }
-    
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 16px 20px;
-        border-top: 1px solid #e0e0e0;
-        background: #f8f9fa;
-        border-radius: 0 0 8px 8px;
-    }
-    
-    .btn-modal {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-    }
-    
-    .btn-cancel {
-        background: #e0e0e0;
-        color: #333;
-    }
-    
-    .btn-cancel:hover {
-        background: #d0d0d0;
-    }
-    
-    .btn-save {
-        background: #28a745;
-        color: white;
-    }
-    
-    .btn-save:hover {
-        background: #218838;
-    }
-</style>
 
-@code {
-    [Parameter] public Node Node { get; set; } = null!;
-    [Parameter] public IOrgService Service { get; set; } = null!;
-    [Parameter] public EventCallback OnNodeDeleted { get; set; }
-    [Parameter] public EventCallback OnNodeMoved { get; set; }
-
-    [Inject] public IJSRuntime JS { get; set; } = null!;
-
-    private bool ShowButtons = false;
-    private bool ShowAddChildModal = false;
-    private bool IsEditingName = false;
-    private bool IsExpanded = true;
-    private bool IsDragOver = false;
-    private string EditingNameValue = string.Empty;
-    private string NewChildName = string.Empty;
-    private static Node? DraggedNode = null;
-
-    protected override void OnInitialized()
-    {
-        IsExpanded = Node.Level <= 2;
-    }
-
-    private void ToggleExpanded() => IsExpanded = !IsExpanded;
-
-    private void StartEditingName()
-    {
-        IsEditingName = true;
-        EditingNameValue = Node.Name;
-    }
-
-    private async Task SaveEditedName()
-    {
-        if (!string.IsNullOrWhiteSpace(EditingNameValue) && EditingNameValue != Node.Name)
-        {
-            Service.RenameNode(Node, EditingNameValue);
-        }
-        IsEditingName = false;
-        EditingNameValue = string.Empty;
-        ShowButtons = false;
-    }
-
-    private void CancelEditingName()
-    {
-        IsEditingName = false;
-        EditingNameValue = string.Empty;
-    }
-
-    private async Task HandleEditKeypress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") await SaveEditedName();
-        else if (e.Key == "Escape") CancelEditingName();
-    }
-
-    private void OpenAddChildModal()
-    {
-        NewChildName = string.Empty;
-        ShowAddChildModal = true;
-    }
-
-    private void CloseAddChildModal()
-    {
-        ShowAddChildModal = false;
-        NewChildName = string.Empty;
-    }
-
-    private async Task HandleChildKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") await AddChild();
-        else if (e.Key == "Escape") CloseAddChildModal();
-    }
-
-    private async Task AddChild()
-    {
-        if (!string.IsNullOrWhiteSpace(NewChildName))
-        {
-            var newChild = new Node { Name = NewChildName };
-            Service.AddChildToNode(Node, newChild);
-            NewChildName = string.Empty;
-            ShowAddChildModal = false;
-            await OnNodeMoved.InvokeAsync();
-        }
-    }
-
-    private async Task DeleteNode()
-    {
-        if (await JS.InvokeAsync<bool>("confirm", $"Delete '{Node.Name}' and all its children?"))
-        {
-            Service.DeleteNode(Node);
-            await OnNodeDeleted.InvokeAsync();
-        }
-    }
-
-    private void HandleDragStart(DragEventArgs e) { DraggedNode = Node; }
-    private void HandleDragEnd(DragEventArgs e) { DraggedNode = null; IsDragOver = false; }
-    private void HandleDragOver(DragEventArgs e) { IsDragOver = true; }
-    private void HandleDragLeave(DragEventArgs e) { IsDragOver = false; }
-
-    private async Task HandleDrop(DragEventArgs e)
-    {
-        IsDragOver = false;
-        if (DraggedNode == null || DraggedNode.Id == Node.Id) { DraggedNode = null; return; }
-
-        if (Node.Route.IsDescendantOf(DraggedNode.Route)) { DraggedNode = null; return; }
-
-        Service.MoveNode(DraggedNode, Node);
-        await OnNodeMoved.InvokeAsync();
-        DraggedNode = null;
-    }
-}
