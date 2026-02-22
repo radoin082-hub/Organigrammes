@@ -11,6 +11,7 @@ builder.Services.AddRazorComponents()
 	.AddInteractiveServerComponents();
 
 builder.RegisterDbcontext("DefaultConnection");
+builder.Services.AddLocalization();
 
 
 builder.Services.RegisterCore();
@@ -28,7 +29,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// ...
+string[] supportedCultures = ["en-US", "fr-FR", "ar"];
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[1])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
 
+app.UseRequestLocalization(localizationOptions);
 app.UseAntiforgery();
 
 app.MapStaticAssets();

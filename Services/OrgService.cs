@@ -122,6 +122,8 @@ public class OrgService
     {
         try
         {
+            var a=localizer["Node.MoveToDescendant.Title"];
+            var b=localizer["Node.NotFound"];
             var nodes = await orgStorage.GetAllNodes();
             await buildHierarchy(nodes);
             return nodes;
