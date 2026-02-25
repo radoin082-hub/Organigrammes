@@ -190,7 +190,7 @@
     <value>Supprimer</value>
   </data>
   <data name="Node.AddChildTo" xml:space="preserve">
-    <value>Ajouter un enfant à </value>
+    <value>Ajouter un sous à </value>
   </data>
   <data name="Node.AddRoot" xml:space="preserve">
     <value>Ajouter un Racine</value>
