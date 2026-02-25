@@ -1,7 +1,10 @@
 using Compta.Ledger.Core.orgTestapp.App;
 using Compta.Ledger.Core.orgTestapp.Entities;
+using Compta.Ledger.Core.orgTestapp.Extention;
+using Compta.Ledger.Core.orgTestapp.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using System.Globalization;
 
 namespace Compta.Ledger.Core.orgTestapp.Components;
 
@@ -13,10 +16,10 @@ public partial class CategoryTree
     private List<Node> filteredRoots = new();
 
     private bool showRootModal = false;
-    private string newRootName = string.Empty;
+    private NodeModel nodeModel =new();
     private string searchText = string.Empty;
     private bool isLoading = false;
-
+    protected bool isLTR => CultureInfo.CurrentCulture.TwoLetterISOLanguageName != "ar";
     protected override async Task OnInitializedAsync()
     {
         await LoadRootNodes();
@@ -66,7 +69,7 @@ public partial class CategoryTree
         return node.Children?.Any(child => NodeMatches(child, term)) == true;
     }
     private Node? FilterNode(Node node, string term)
-    {   
+    {
         bool isMatch = node.Name.Contains(term, StringComparison.OrdinalIgnoreCase);
 
         var filteredChildren = node.Children?
@@ -90,7 +93,7 @@ public partial class CategoryTree
             {
                 Id = node.Id,
                 Name = node.Name,
-                Route=node.Route,
+                Route = node.Route,
                 Children = filteredChildren!
             };
         }
@@ -108,7 +111,7 @@ public partial class CategoryTree
     private async Task LoadRootNodes()
     {
         isLoading = true;
-        StateHasChanged(); 
+        StateHasChanged();
 
         var result = await OrgService.GetAllNodes();
 
@@ -129,31 +132,30 @@ public partial class CategoryTree
 
     private void OpenModal()
     {
-        newRootName = string.Empty;
+        nodeModel = new();
         showRootModal = true;
     }
 
     private void CloseModal()
     {
         showRootModal = false;
-        newRootName = string.Empty;
+        nodeModel = new();
     }
 
     private async Task KeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
-            await AddRootCategory();    
+            await AddRootCategory();
         else if (e.Key == "Escape")
             CloseModal();
     }
 
     private async Task AddRootCategory()
     {
-        if (string.IsNullOrWhiteSpace(newRootName))
-            return;
 
 
-        var result = await OrgService.CreateOrg(new Node{Name = newRootName});
+
+        var result = await OrgService.CreateOrg(new Node { Name = nodeModel.Name });
 
         if (result.IsSuccess)
         {

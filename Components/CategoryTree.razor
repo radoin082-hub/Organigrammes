@@ -1,29 +1,29 @@
 ﻿@using Compta.Ledger.Core.orgTestapp.App
+@using Compta.Ledger.Core.orgTestapp.Resources
 @using Compta.Ledger.Core.orgTestapp.Services
 @using Compta.Ledger.Core.orgTestapp.Entities
+@using Microsoft.Extensions.Localization
 @rendermode InteractiveServer
-
+@inject IStringLocalizer<Resource> localizer
 <div class="category-tree">
 
     <div class="d-flex justify-content-between mb-2">
 
-        <div class="google-search-container">
-            <span class="search-icon">
-                <i class="fa fa-search" aria-hidden="true"></i>
+        <div class="input-search-container" dir="@(isLTR ? "ltr" : "rtl")">
 
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
             </span>
 
             <input type="text"
-                   class="google-search-input"
-                   placeholder="Search categories..."
+                   class="input-search-input"
+                   placeholder="@localizer["Input.Search.categories"]..."
                    @bind="searchText"
                    @onkeydown="OnSearchKeyDown" />
 
-                    
             @if (!string.IsNullOrWhiteSpace(searchText))
             {
                 <i class="fa fa-times-circle clear-icon"
-                   aria-hidden="true"
                    @onclick="ClearSearch"></i>
             }
 
@@ -31,7 +31,7 @@
 
         <button class="btn-add-root" @onclick="OpenModal">
             <i class="fa fa-plus" aria-hidden="true"></i>
-            Add Root
+            @localizer["Add.Root"]
         </button>
 
 
@@ -47,7 +47,7 @@
     {
         <div class="loading-spinner">
             <i class="fa fa-spinner fa-pulse fa-fw"></i>
-            Loading...
+            @localizer["Grid.Loading"]
         </div>
 
     }
@@ -66,7 +66,7 @@
     else
     {
         <div class="p-2 rounded bg-light text-dark">
-            <strong>No Node found.</strong>
+            <strong>@localizer["Node.NotFound"]</strong>
         </div>
 
     }
@@ -80,32 +80,37 @@
 
     <div class="modal-dialog-container">
         <div class="modal-box">
-            <div class="modal-header">
-                <h5>Create Root Category</h5>
-                <button class="close-btn" @onclick="CloseModal">✕</button>
-            </div>
+            <EditForm Model="nodeModel" OnValidSubmit="AddRootCategory">
+                <DataAnnotationsValidator />
 
-            <div class="modal-body">
-                <input type="text"
-                       class="modal-input"
-                       @bind="newRootName"
-                       placeholder="Enter category name"
-                       @onkeydown="KeyDown"
-                       autofocus />
-            </div>
+                <div class="modal-header">
+                    <h5>@localizer["Node.AddRoot"]</h5>
+                    <button class="close-btn" @onclick="CloseModal">✕</button>
+                </div>
 
-            <div class="modal-footer">
-                <button class="btn-modal btn-cancel"
-                        @onclick="CloseModal">
-                    Cancel
-                </button>
+                <div class="modal-body">
+                    <InputText class="modal-input"
+                               @bind-value="nodeModel.Name"
+                               placeholder="@localizer["Node.EntreCategory"]"
+                               @onkeydown="KeyDown"
+                               autofocus />
+                    <ValidationMessage For="() => nodeModel!.Name" />
+                </div>
 
-                <button class="btn-modal btn-save"
-                        disabled="@string.IsNullOrWhiteSpace(newRootName)"
-                        @onclick="AddRootCategory">
-                    Add Category
-                </button>
-            </div>
+                <div class="modal-footer">
+                    <button class="btn-modal btn-cancel"
+                            @onclick="CloseModal">
+                        @localizer["Button.Cancel"]
+
+                    </button>
+
+                    <button class="btn-modal btn-save"                        
+                            type="submit">
+                        @localizer["Button.Create"]
+                    </button>
+                </div>
+
+            </EditForm>
         </div>
     </div>
 }

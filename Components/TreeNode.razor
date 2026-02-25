@@ -4,7 +4,7 @@
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 
-<div class="tree-node" style="margin-left: @(25)px;">
+<div class="tree-node" style="@(isLTR ? "margin-left" : "margin-right"): @(25)px;">
     <div class="node-item @(isDragOver ? "drag-over" : "")"
          @onmouseenter="() => showButtons = true"
          @onmouseleave="() => showButtons = false"
@@ -36,18 +36,17 @@
                 @if (Node.Children is not null && Node.Children.Any())
                 {
                     <button class="toggle-btn" @onclick="toggleExpanded">
+
                         @if (isExpanded)
                         {
                             <i class="fa fa-angle-down fa-lg" aria-hidden="true"></i>
-
                         }
                         else
                         {
-                            <i class="fa fa-angle-right fa-lgs" aria-hidden="true"></i>
-
+                            <i class="@(isLTR ? "fa fa-angle-right" : "fa fa-angle-left") fa-lgs" aria-hidden="true"></i>
                         }
                     </button>
-            
+
 
                 }
                 else
@@ -55,13 +54,33 @@
                     <span class="toggle-placeholder"></span>
                 }
                 <span class="folder-icon">📁</span>
-                <span class="node-name">
+                @if (isLTR)
+                {
+                    <span class="node-name">
+
+                        @Node.Name
+                        @if (Node.Children is not null && Node.Children.Any())
+                        {
+                            <span class="child-count">[ @Node.Children.Count ]</span>
+                        }
+                    </span>
+                }
+                else
+                {
+
                     @Node.Name
-                    @if (Node.Children is not null && Node.Children.Any())
-                    {
-                        <span class="child-count">[ @Node.Children.Count ]</span>
-                    }
-                </span>
+                    <span class="node-name">
+                        @if (Node.Children is not null && Node.Children.Any())
+                        {
+                            <span class="child-count">[ @Node.Children.Count ]</span>
+
+
+                        }
+                    </span>
+
+                }
+
+
                 <div class="node-actions @(showButtons ? "visible" : "")">
                     <button class="action-btn edit" @onclick="startEditing" title="Rename">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
@@ -95,19 +114,25 @@
     <div class="modal-backdrop" @onclick="closeChildModal"></div>
     <div class="modal-dialog-container">
         <div class="modal-box">
-            <div class="modal-header">
-                <h5>Add Child to '@Node.Name'</h5>
-                <button class="close-btn" @onclick="closeChildModal">✕</button>
-            </div>
-            <div class="modal-body">
-                <label>Child Category Name</label>
-                <input type="text" class="modal-input" @bind="newChildName"
-                       placeholder="Enter child name" @onkeydown="keyDown" autofocus />
-            </div>
-            <div class="modal-footer">
-                <button class="btn-modal btn-cancel" @onclick="closeChildModal">Cancel</button>
-                <button class="btn-modal btn-save" @onclick="createChild">Add Child</button>
-            </div>
+            <EditForm Model="nodeModel" OnValidSubmit="createChild">
+                <DataAnnotationsValidator/>
+                <div class="modal-header">
+                    <h5>@localizer!["Node.AddChildTo"] '@Node.Name'</h5>
+                    <button class="close-btn" @onclick="closeChildModal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <label>@localizer!["Root.Create"]</label>
+                    <InputText class="modal-input" @bind-value="nodeModel.Name"
+                           placeholder="@localizer!["Node.EntreCategory"]" @onkeydown="keyDown" autofocus />
+                    <ValidationMessage For="() => nodeModel!.Name" />
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-modal btn-cancel" @onclick="closeChildModal">@localizer!["Button.Cancel"]</button>
+                    <button class="btn-modal btn-save" type="submit">@localizer!["Button.Create"]</button>
+                </div>
+            </EditForm>
+
         </div>
     </div>
 }

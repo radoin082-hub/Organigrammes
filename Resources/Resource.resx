@@ -118,87 +118,87 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Node.GetChildrenException" xml:space="preserve">
-    <value>Impossible de récupérer les nœuds enfants depuis la base de données.</value>
+    <value>Node.GetChildrenException</value>
   </data>
   <data name="Node.GetAllException" xml:space="preserve">
-    <value>Impossible de récupérer les nœuds depuis la base de données.</value>
+    <value>Node.GetAllException</value>
   </data>
   <data name="Node.GetbyIdException" xml:space="preserve">
-    <value>Le nœud demandé avec l’ID spécifié est introuvable.</value>
+    <value>Node.GetbyIdException</value>
   </data>
   <data name="Node.NotFound" xml:space="preserve">
-    <value>Noeud non trouve</value>
+    <value>Node.NotFound</value>
   </data>
   <data name="Node.NotFound.Description" xml:space="preserve">
-    <value>Le nœud demandé est introuvable.</value>
+    <value>Node.NotFound.Description</value>
   </data>
   <data name="Node.NotFound.Title" xml:space="preserve">
-    <value>Nœud introuvable</value>
+    <value>Node.NotFound.Title</value>
   </data>
   <data name="Node.DeleteException" xml:space="preserve">
-    <value>Une erreur est survenue lors de la suppression du nœud.</value>
+    <value>Node.DeleteException</value>
   </data>
   <data name="Move.Exception" xml:space="preserve">
-    <value>Une erreur est survenue lors du déplacement du nœud.</value>
+    <value>Move.Exception</value>
   </data>
   <data name="Node.MoveToDescendant.Title" xml:space="preserve">
-    <value>deplace  un nœud </value>
+    <value>Node.MoveToDescendant.Title</value>
   </data>
   <data name="Node.MoveToDescendant.Description" xml:space="preserve">
-    <value>Impossible de déplacer un nœud vers l’un de ses descendants</value>
+    <value>Node.MoveToDescendant.Description</value>
   </data>
   <data name="Node.MoveException" xml:space="preserve">
-    <value>Une erreur est survenue lors du déplacement du nœud.</value>
+    <value>Node.MoveException</value>
   </data>
   <data name="Node.RenameException" xml:space="preserve">
-    <value>Une erreur est survenue lors du renommage du nœud.</value>
+    <value>Node.RenameException</value>
   </data>
   <data name="Node.Rename.Title" xml:space="preserve">
-    <value>Échec du renommage du nœud</value>
+    <value>Node.Rename.Title</value>
   </data>
   <data name="Node.Rename.Description" xml:space="preserve">
-    <value>Une erreur est survenue lors du renommage du nœud.</value>
+    <value>Node.Rename.Description</value>
   </data>
   <data name="Node.Update.Description" xml:space="preserve">
-    <value>An error occurred while updating the node. No changes were saved.</value>
+    <value>Node.Update.Description</value>
   </data>
   <data name="Node.Update.Title" xml:space="preserve">
-    <value>La mise à jour du nœud a échoué</value>
+    <value>Node.Update.Title</value>
   </data>
   <data name="Input.Search.categories" xml:space="preserve">
-    <value>Recherch nœud </value>
+    <value>Input.Search.categories</value>
   </data>
   <data name="Add.Root" xml:space="preserve">
-    <value>Ajouter nœud</value>
+    <value>Add.Root</value>
   </data>
   <data name="Grid.Loading" xml:space="preserve">
-    <value>Chargement</value>
+    <value>Grid.Loading</value>
   </data>
   <data name="Root.Create" xml:space="preserve">
-    <value>Créete racine catégorie</value>
+    <value>Root.Create</value>
   </data>
   <data name="Node.EntreCategory" xml:space="preserve">
-    <value>Saisir le nom de la catégorie</value>
+    <value>Node.EntreCategory</value>
   </data>
   <data name="Button.Create" xml:space="preserve">
-    <value>Créer</value>
+    <value>Button.Create</value>
   </data>
   <data name="Button.Cancel" xml:space="preserve">
-    <value>Annuler</value>
+    <value>Button.Cancel</value>
   </data>
   <data name="Delete" xml:space="preserve">
-    <value>Supprimer</value>
+    <value>Delete</value>
   </data>
   <data name="Node.AddChildTo" xml:space="preserve">
-    <value>Ajouter un enfant à </value>
+    <value>Node.AddChildTo</value>
   </data>
   <data name="Node.AddRoot" xml:space="preserve">
-    <value>Ajouter un Racine</value>
+    <value>Node.AddRoot</value>
   </data>
   <data name="Node.AndAllItsChildren" xml:space="preserve">
-    <value>et tous ses enfants ?</value>
+    <value>Node.AndAllItsChildren</value>
   </data>
   <data name="Node_Required" xml:space="preserve">
-    <value>Le nom est obligatoire.</value>
+    <value>Node.Required</value>
   </data>
 </root>

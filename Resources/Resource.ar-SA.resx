@@ -118,87 +118,87 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Node.GetChildrenException" xml:space="preserve">
-    <value>Impossible de récupérer les nœuds enfants depuis la base de données.</value>
+    <value>غير قادر على استرجاع العقد الفرعية من قاعدة البيانات.</value>
   </data>
   <data name="Node.GetAllException" xml:space="preserve">
-    <value>Impossible de récupérer les nœuds depuis la base de données.</value>
+    <value>تعذر استرجاع العقد من قاعدة البيانات.</value>
   </data>
   <data name="Node.GetbyIdException" xml:space="preserve">
-    <value>Le nœud demandé avec l’ID spécifié est introuvable.</value>
+    <value>العقدة المطلوبة بالمعرّف المحدد غير موجودة.</value>
   </data>
   <data name="Node.NotFound" xml:space="preserve">
-    <value>Noeud non trouve</value>
+    <value>الفرع غير موجودة</value>
   </data>
   <data name="Node.NotFound.Description" xml:space="preserve">
-    <value>Le nœud demandé est introuvable.</value>
+    <value>الفرع المطلوبة غير موجودة.</value>
   </data>
   <data name="Node.NotFound.Title" xml:space="preserve">
-    <value>Nœud introuvable</value>
+    <value>الفرع غير موجودة</value>
   </data>
   <data name="Node.DeleteException" xml:space="preserve">
-    <value>Une erreur est survenue lors de la suppression du nœud.</value>
+    <value>حدث خطأ أثناء حذف الفرع.</value>
   </data>
   <data name="Move.Exception" xml:space="preserve">
-    <value>Une erreur est survenue lors du déplacement du nœud.</value>
+    <value>حدث خطأ أثناء نقل الفرع.</value>
   </data>
   <data name="Node.MoveToDescendant.Title" xml:space="preserve">
-    <value>deplace  un nœud </value>
+    <value>تحريك عقدة</value>
   </data>
   <data name="Node.MoveToDescendant.Description" xml:space="preserve">
-    <value>Impossible de déplacer un nœud vers l’un de ses descendants</value>
+    <value>يتعذر نقل عقدة إلى أحد أبنائها</value>
   </data>
   <data name="Node.MoveException" xml:space="preserve">
-    <value>Une erreur est survenue lors du déplacement du nœud.</value>
+    <value>حدث خطأ أثناء نقل الفرع.</value>
   </data>
   <data name="Node.RenameException" xml:space="preserve">
-    <value>Une erreur est survenue lors du renommage du nœud.</value>
+    <value>حدث خطأ أثناء إعادة تسمية الفرع.</value>
   </data>
   <data name="Node.Rename.Title" xml:space="preserve">
-    <value>Échec du renommage du nœud</value>
+    <value>فشل إعادة تسمية الفرع</value>
   </data>
   <data name="Node.Rename.Description" xml:space="preserve">
-    <value>Une erreur est survenue lors du renommage du nœud.</value>
+    <value>حدث خطأ أثناء إعادة تسمية الفرع.</value>
   </data>
   <data name="Node.Update.Description" xml:space="preserve">
-    <value>An error occurred while updating the node. No changes were saved.</value>
+    <value>حدث خطأ أثناء تحديث الفرع. لم يتم حفظ أي تغييرات.</value>
   </data>
   <data name="Node.Update.Title" xml:space="preserve">
-    <value>La mise à jour du nœud a échoué</value>
+    <value>فشل تحديث الفرع</value>
   </data>
   <data name="Input.Search.categories" xml:space="preserve">
-    <value>Recherch nœud </value>
+    <value>بحث عن فرع</value>
   </data>
   <data name="Add.Root" xml:space="preserve">
-    <value>Ajouter nœud</value>
+    <value>إضافة عقدة</value>
   </data>
   <data name="Grid.Loading" xml:space="preserve">
-    <value>Chargement</value>
+    <value>جاري تحميل</value>
   </data>
   <data name="Root.Create" xml:space="preserve">
-    <value>Créete racine catégorie</value>
+    <value>إضافة فرع</value>
   </data>
   <data name="Node.EntreCategory" xml:space="preserve">
-    <value>Saisir le nom de la catégorie</value>
+    <value>أدخل اسم فرع</value>
   </data>
   <data name="Button.Create" xml:space="preserve">
-    <value>Créer</value>
+    <value>إنشاء</value>
   </data>
   <data name="Button.Cancel" xml:space="preserve">
-    <value>Annuler</value>
+    <value>إلغاء</value>
   </data>
   <data name="Delete" xml:space="preserve">
-    <value>Supprimer</value>
+    <value>حذف</value>
   </data>
   <data name="Node.AddChildTo" xml:space="preserve">
-    <value>Ajouter un enfant à </value>
+    <value>إضافة فرع إلى </value>
   </data>
   <data name="Node.AddRoot" xml:space="preserve">
-    <value>Ajouter un Racine</value>
+    <value>إضافة فرع رئيسي  </value>
   </data>
   <data name="Node.AndAllItsChildren" xml:space="preserve">
-    <value>et tous ses enfants ?</value>
+    <value> ؟  وكل أولاده</value>
   </data>
   <data name="Node_Required" xml:space="preserve">
-    <value>Le nom est obligatoire.</value>
+    <value> حقل الاسم مطلوب</value>
   </data>
 </root>

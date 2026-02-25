@@ -1,4 +1,4 @@
-﻿.google-search-container {
+﻿.input-search-container {
     position: relative;
     display: flex;
     align-items: center;
@@ -9,8 +9,16 @@
     padding: 6px 35px 6px 30px; 
     box-shadow: 0 1px 6px rgba(32, 33, 36, 0.1);
 }
+    .input-search-container[dir="rtl"] .search-icon {
+        left: auto;
+        right: 10px;
+    }
 
-.google-search-input {
+    .input-search-container[dir="rtl"] .clear-icon {
+        right: auto;
+        left: 10px;
+    }
+.input-search-input {
     border: none;
     outline: none;
     flex: 1;

@@ -1,8 +1,13 @@
 using Compta.Ledger.Core.orgTestapp.App;
 using Compta.Ledger.Core.orgTestapp.Entities;
+using Compta.Ledger.Core.orgTestapp.Models;
+using Compta.Ledger.Core.orgTestapp.Resources;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
+using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Compta.Ledger.Core.orgTestapp.Components;
 
@@ -12,23 +17,27 @@ public partial class TreeNode
     [Parameter] public IOrgService Service { get; set; } = null!;
     [Parameter] public EventCallback OnNodeDeleted { get; set; }
     [Parameter] public EventCallback OnNodeMoved { get; set; }
-
     [Inject] public IJSRuntime JS { get; set; } = null!;
-
+    [Inject] private IStringLocalizer<Resource>? localizer { get; set; }
     private bool showButtons = false;
     private bool showCreateChildModal = false;
     private bool isEditingName = false;
     private bool isExpanded = true;
     private bool isDragOver = false;
+    private bool isLTR = true;
     private string editingNameValue = string.Empty;
-    private string newChildName = string.Empty;
+    private NodeModel nodeModel = new();
     private static Node? draggedNode = null;
 
-    protected override void OnInitialized()
+    protected override Task OnInitializedAsync()
     {
-        isExpanded = Node.Level <= 2;
-    }
+        var cul = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
+        isLTR = cul == "ar" ? false : true;
+
+        isExpanded = Node.Level <= 2;
+        return base.OnInitializedAsync();
+    }
     private void toggleExpanded() => isExpanded = !isExpanded;
 
     private void startEditing()
@@ -71,14 +80,14 @@ public partial class TreeNode
 
     private void openChildModal()
     {
-        newChildName = string.Empty;
+        nodeModel = new();
         showCreateChildModal = true;
     }
 
     private void closeChildModal()
     {
         showCreateChildModal = false;
-        newChildName = string.Empty;
+        nodeModel = new();
     }
 
     private async Task keyDown(KeyboardEventArgs e)
@@ -89,27 +98,26 @@ public partial class TreeNode
 
     private async Task createChild()
     {
-        if (!string.IsNullOrWhiteSpace(newChildName))
+
+        var newChild = new Node { Name = nodeModel.Name };
+        var result = await Service.createChildToNode(Node, newChild);
+        if (result.IsSuccess)
         {
-            var newChild = new Node { Name = newChildName };
-            var result = await Service.createChildToNode(Node, newChild);
-            if (result.IsSuccess)
-            {
 
-            }
-            else
-            {
-
-            }
-            newChildName = string.Empty;
-            showCreateChildModal = false;
-            await OnNodeMoved.InvokeAsync();
         }
+        else
+        {
+
+        }
+        nodeModel = new();
+        showCreateChildModal = false;
+        await OnNodeMoved.InvokeAsync();
+
     }
 
     private async Task deleteNode()
     {
-        if (await JS.InvokeAsync<bool>("confirm", $"Delete '{Node.Name}' and all its children?"))
+        if (await JS.InvokeAsync<bool>("confirm", $"{localizer!["Delete"]} '{Node.Name}' {localizer!["Node.AndAllItsChildren"]}"))
         {
             var result = await Service.DeleteNode(Node);
             if (result.IsSuccess)
